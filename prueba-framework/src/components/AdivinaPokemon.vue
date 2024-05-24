@@ -1,21 +1,19 @@
 <template>
-  
-  <!-- Contador-->
-  <span class="counter">Pokemones descubiertos: {{ correctGuesses }}</span>
-  <div class="pokemon-game">
-    
-    <!-- Itera sobre la lista de Pokémon -->
-    <div v-for="(pokemon, index) in pokemonList" :key="index" class="pokemon-item">
-      <!-- Imagen del Pokémon, con filtro de desenfoque y escala de grises si aún no ha sido descubierto -->
-      <img :src="getPokemonImage(index)" :style="{ filter: pokemon.discovered ? 'none' : 'blur(2px) grayscale(100%)' }" />
-      <!-- Contenedor para mantener el tamaño consistente -->
-      <div class="pokemon-details">
-        <!-- Campo de entrada para adivinar el nombre del Pokémon -->
-        <input v-if="!pokemon.discovered" type="text" v-model="pokemon.guess" placeholder="Adivina el Pokémon" />
-        <!-- Botón para descubrir el Pokémon -->
-        <button v-if="!pokemon.discovered" @click="checkPokemon(index)">Descubrir</button>
-        <!-- Si el Pokémon ya ha sido descubierto, muestra su nombre -->
-        <p v-else>{{ pokemon.name }}</p>
+  <div>
+    <!-- contador-->
+    <span class="contador">Pokemones descubiertos: {{ correctGuesses }}</span>
+    <div class="pokemon-game">
+      <div v-for="(pokemon, index) in pokemonList" :key="index" class="pokemon-item">
+        <!-- filtro desenfoque + grises -->
+        <img :src="pokemon.image" :style="{ filter: pokemon.descubierto ? 'none' : 'blur(2px) grayscale(100%)' }" />
+        <div class="pokemon-details">
+          <!-- input para ingresar name poke -->
+          <input v-if="!pokemon.descubierto" type="text" v-model="pokemon.guess" />
+          <!-- btn -->
+          <button v-if="!pokemon.descubierto" @click="checkPokemon(pokemon, index)">Descubrir</button>
+          <!-- nombre pokemon descubierto -->
+          <p v-else>{{ pokemon.name }}</p>
+        </div>
       </div>
     </div>
   </div>
@@ -24,51 +22,32 @@
 <script>
 export default {
   name: 'AdivinaPokemon',
-  data() {
-    return {
-      pokemonList: [],
-      correctGuesses: 0,
-    };
+  props: {
+    //pt 2
+    pokemonList: {
+      type: Array,
+      required: true
+    }
   },
-  mounted() {
-    // Al cargar el componente, se obtiene la data de los Pokémon
-    this.fetchPokemonData();
+  computed: {
+    // pokes descubiertos
+    correctGuesses() {
+      return this.pokemonList.filter(pokemon => pokemon.descubierto).length;
+    }
   },
   methods: {
-    async fetchPokemonData() {
-      try {
-        // Se obtiene la lista de Pokémon desde la API PokeAPI
-        const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=20');
-        const data = await response.json();
-        // Se crea una lista de Pokémon con sus nombres, estado de descubrimiento y campo de adivinanza
-        this.pokemonList = data.results.map((pokemon, index) => ({
-          name: pokemon.name,
-          discovered: false,
-          guess: '',
-          image: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${index + 1}.png`
-        }));
-      } catch (error) {
-        console.error('Error fetching Pokémon data:', error);
-      }
-    },
-    getPokemonImage(index) {
-      // Retorna URL de img Pokémon basada en su índice
-      return this.pokemonList[index].image;
-    },
-    checkPokemon(index) {
-      // Verifica si la adivinanza coincide con el nombre del Pokémon
-      const currentPokemonName = this.pokemonList[index].name;
-      if (this.pokemonList[index].guess.toLowerCase() === currentPokemonName.toLowerCase()) {
-        // Si la adivinanza es correcta, se marca como descubierto y se incrementa el contador de adivinanzas correctas
-        this.pokemonList[index].discovered = true;
-        this.$emit('pokemon-discovered');
-        this.correctGuesses++;
+    checkPokemon(pokemon, index) {
+      const currentPokemonName = pokemon.name;
+      // Comparar ingresado x usuario con nombre poke
+      if (pokemon.guess.toLowerCase() === currentPokemonName.toLowerCase()) {
+        // emitiendo indice pokémon descubierto 
+        this.$emit('pokemon-descubierto', index);
       } else {
         alert('Nombre incorrecto. ¡Sigue intentando!');
       }
-    },
-  },
-}
+    }
+  }
+};
 </script>
 
 <style>
@@ -86,7 +65,7 @@ export default {
 }
 
 
-.counter {
+.contador {
   font-weight: bold;
   text-align: center;
 }
